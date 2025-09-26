@@ -1,0 +1,123 @@
+# --- Time Series: Monthly Pricing & ANOVA (Feb 2024 – Jan 2025) ---
+# Requirements
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# Keep ID, region/room, and all monthly price columns: price_2_24 ... price_1_25
+airbnb_time <- data_airbnb |>
+  select(c(id, region_name, room_type, starts_with("price_"))) |>
+  mutate(
+    id = as.factor(id),
+    room_type = as.factor(room_type),
+    region_name = as.factor(region_name)
+  )
+
+# Reshape wide -> long, build a proper Date column named 'month'
+airbnb_long <- airbnb_time |>
+  pivot_longer(
+    cols = starts_with("price_"),
+    names_to = "month",
+    values_to = "price"
+  ) |>
+  mutate(
+    month = gsub("price_", "", month),               # e.g. "2_24"
+    month = sub("_", "-", month),                    # "2-24"
+    month = paste0("20", sub("^(\\d+)-(\\d+)$", "\\2-\\1", month)), # "2024-2"
+    month = paste0(month, "-01"),                    # "2024-2-01"
+    month = as.Date(month, format = "%Y-%m-%d")
+  )
+
+# Quick NA check
+summary(airbnb_long$price)
+table(is.na(airbnb_long$price))
+
+# --- Approach 1: drop NA prices ----
+airbnb_cleaned <- airbnb_long |>
+  filter(!is.na(price))
+
+# Overall monthly trend
+airbnb_cleaned |>
+  group_by(month) |>
+  summarise(avg_price = mean(price), .groups = "drop") |>
+  ggplot(aes(x = month, y = avg_price)) +
+  geom_line(size = 1) +
+  labs(title = "Average Monthly Airbnb Price (Auckland)",
+       x = "Month", y = "Average Price ($)") +
+  theme_minimal()
+
+# --- Approach 2: forward fill missing prices within each listing ----
+airbnb_forward <- airbnb_long |>
+  arrange(id, month) |>
+  group_by(id) |>
+  fill(price, .direction = "downup") |>
+  ungroup()
+
+# Monthly trend (forward-filled)
+airbnb_forward |>
+  group_by(month) |>
+  summarise(avg_price = mean(price), .groups = "drop") |>
+  ggplot(aes(x = month, y = avg_price)) +
+  geom_line(size = 1) +
+  labs(title = "Average Monthly Airbnb Price (Forward-filled)",
+       x = "Month", y = "Average Price ($)") +
+  theme_minimal()
+
+# ---- Regional breakdown ----
+# Per-region monthly trend
+airbnb_forward |>
+  group_by(region_name, month) |>
+  summarise(avg_price = mean(price), .groups = "drop") |>
+  ggplot(aes(x = month, y = avg_price, color = region_name)) +
+  geom_line(size = 0.8) +
+  labs(title = "Monthly Price Trends by Region",
+       x = "Month", y = "Average Price ($)", color = "Region") +
+  theme_minimal()
+
+# Region-level fluctuation summary
+region_stats_forward <- airbnb_forward |>
+  group_by(region_name) |>
+  summarise(
+    avg_price = mean(price),
+    region_std = sd(price),
+    region_range = max(price) - min(price),
+    .groups = "drop"
+  ) |>
+  arrange(desc(region_std))
+print(region_stats_forward)
+
+# ---- Room type breakdown ----
+airbnb_forward |>
+  group_by(room_type, month) |>
+  summarise(avg_price = mean(price), .groups = "drop") |>
+  ggplot(aes(x = month, y = avg_price, color = room_type)) +
+  geom_line(size = 1) +
+  labs(title = "Price Trends by Room Type",
+       x = "Month", y = "Average Price ($)", color = "Room Type") +
+  theme_minimal()
+
+# Room-type summaries
+room_stats_forward <- airbnb_forward |>
+  group_by(room_type) |>
+  summarise(avg_price = mean(price), .groups = "drop")
+print(room_stats_forward)
+
+room_fluctuation <- airbnb_forward |>
+  group_by(room_type) |>
+  summarise(
+    room_std = sd(price),
+    room_range = max(price) - min(price),
+    .groups = "drop"
+  ) |>
+  arrange(desc(room_std))
+print(room_fluctuation)
+
+# ---- ANOVA tests ----
+anova_month <- aov(price ~ as.factor(month), data = airbnb_forward)
+summary(anova_month)
+
+anova_region_time <- aov(price ~ region_name * as.factor(month), data = airbnb_forward)
+summary(anova_region_time)
+
+anova_room_type <- aov(price ~ room_type * as.factor(month), data = airbnb_forward)
+summary(anova_room_type)
