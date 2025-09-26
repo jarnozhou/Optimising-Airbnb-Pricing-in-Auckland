@@ -1,0 +1,61 @@
+# --- Linear Regression: Airbnb Pricing (Auckland) ---
+# Requirements
+library(dplyr)
+library(ggplot2)
+library(car)   # for VIF
+
+# Select and prepare modelling fields
+airbnb_full <- data_airbnb |>
+  select(
+    price, host_is_superhost, host_total_listings_count, host_identity_verified,
+    room_type, accommodates, minimum_nights, maximum_nights, availability_30,
+    number_of_reviews, number_of_reviews_ltm,
+    review_scores_rating, review_scores_accuracy, review_scores_cleanliness,
+    review_scores_checkin, review_scores_communication, review_scores_location,
+    review_scores_value, instant_bookable, region_id, reviews_per_month,
+    basic, hygiene, safety, kitchen_dining, entertainment, outdoor_view,
+    extras, days_open
+  ) |>
+  mutate(
+    room_type = as.factor(room_type),
+    region_id = as.factor(region_id),
+    host_is_superhost = as.factor(host_is_superhost),
+    host_identity_verified = as.factor(host_identity_verified),
+    instant_bookable = as.factor(instant_bookable),
+    price = log(price) # log-transform due to right-skew
+  )
+
+# Standardise numeric predictors (keep price on log scale)
+airbnb_full_scaled <- airbnb_full |>
+  mutate(across(where(is.numeric) & -price, scale))
+
+# Fit model
+airbnb_full_lg <- lm(price ~ ., data = airbnb_full_scaled)
+
+# Summary
+summary(airbnb_full_lg)
+
+# Assumption checks
+alias(lm(price ~ ., data = airbnb_full_scaled))  # perfect collinearity check
+vif_values <- vif(airbnb_full_lg)                # multicollinearity
+print(vif_values)
+
+# Coefficient plot (ordered, excluding intercept)
+coefficients <- summary(airbnb_full_lg)$coefficients[, 1]
+variables <- names(coefficients)
+
+coeff_df <- data.frame(Variable = variables, Coefficient = coefficients) |>
+  dplyr::filter(Variable != "(Intercept)") |>
+  dplyr::arrange(desc(abs(Coefficient)))
+
+ggplot(coeff_df, aes(x = reorder(Variable, Coefficient), y = Coefficient, fill = Coefficient > 0)) +
+  geom_bar(stat = "identity", width = 0.7) +
+  coord_flip() +
+  scale_fill_manual(values = c("red", "blue"), labels = c("Negative", "Positive")) +
+  labs(
+    title = "Influence of Variables on Airbnb Price (Standardized)",
+    x = "Variable", y = "Coefficient Value", fill = "Effect"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size = 14),
+        axis.text.y = element_text(size = 8))
