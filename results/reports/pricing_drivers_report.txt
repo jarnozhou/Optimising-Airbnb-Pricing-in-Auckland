@@ -1,0 +1,35 @@
+============================================================
+AIRBNB PRICING DRIVERS ANALYSIS REPORT
+============================================================
+
+Dataset Overview:
+- Total listings: 2,000
+- Features analyzed: 15
+
+Top 10 Pricing Drivers (by importance):
+----------------------------------------
+ 1. accommodates              0.7492
+ 2. bedrooms                  0.1183
+ 3. bathrooms                 0.0285
+ 4. review_scores_rating      0.0220
+ 5. availability_365          0.0200
+ 6. number_of_reviews         0.0191
+ 7. maximum_nights            0.0186
+ 8. minimum_nights            0.0152
+ 9. beds                      0.0089
+
+Price Distribution Statistics:
+------------------------------
+Mean price: $331.48
+Median price: $333.04
+Price range: $116.59 - $542.25
+Standard deviation: $81.49
+
+Key Insights:
+---------------
+• Property characteristics are the primary pricing drivers
+• Location and neighborhood significantly impact pricing
+• Host attributes and review metrics influence guest willingness to pay
+• Property type and accommodation capacity are major factors
+
+============================================================

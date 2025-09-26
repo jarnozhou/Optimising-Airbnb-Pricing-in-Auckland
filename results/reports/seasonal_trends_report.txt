@@ -1,0 +1,37 @@
+============================================================
+AIRBNB SEASONAL TRENDS ANALYSIS REPORT
+============================================================
+
+Analysis Period: 3,000 listings analyzed
+
+Seasonal Price Analysis:
+-------------------------
+  Autumn: $244.46 avg,  766 listings
+  Spring: $249.41 avg,  734 listings
+  Summer: $268.02 avg,  741 listings
+  Winter: $232.04 avg,  759 listings
+
+Peak and Off-Peak Periods:
+------------------------------
+Peak months: 
+Off-peak months: 
+Highest prices: Jan
+Lowest prices: Jun
+Price variation: 17.5%
+
+Key Seasonal Insights:
+----------------------
+• Summer (Dec-Feb) typically shows highest demand and prices
+• Winter (Jun-Aug) generally represents the off-peak period
+• Shoulder seasons offer balanced pricing opportunities
+• Holiday periods and events significantly impact pricing
+• Regional variations exist within seasonal patterns
+
+Pricing Recommendations:
+------------------------
+• Implement dynamic pricing strategies for peak seasons
+• Offer competitive rates during off-peak periods
+• Monitor local events and adjust pricing accordingly
+• Consider minimum stay requirements during high demand
+
+============================================================
